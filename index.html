@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>bassoonplayer.com</title>
+  <meta name="description" content="bassoonplayer.com" />
+
+  <style>
+    :root{
+      --bg:#ffffff;
+      --text:#0b0b0c;
+      --muted:#6b6b70;
+      --line:#e7e7ea;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      letter-spacing:-0.02em;
+    }
+
+    .wrap{
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:48px 20px;
+    }
+
+    .card{
+      width:min(900px, 100%);
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap:36px;
+      align-items:center;
+    }
+
+    @media (max-width: 820px){
+      .card{
+        grid-template-columns:1fr;
+        gap:26px;
+      }
+    }
+
+    h1{
+      margin:0;
+      font-size: clamp(34px, 5vw, 54px);
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+    }
+
+    .sub{
+      margin:14px 0 0 0;
+      color:var(--muted);
+      font-size: 15px;
+      line-height:1.45;
+      max-width: 44ch;
+    }
+
+    .rule{
+      margin:18px 0 0 0;
+      height:1px;
+      width:140px;
+      background:var(--line);
+    }
+
+    .sig{
+      margin-top: 14px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* SVG sizing */
+    .art{
+      display:flex;
+      justify-content:flex-end;
+      align-items:center;
+    }
+
+    @media (max-width: 820px){
+      .art{ justify-content:flex-start; }
+    }
+
+    svg{
+      width: min(360px, 80vw);
+      height: auto;
+    }
+
+    /* make the drawing feel "designed" */
+    .stroke{
+      stroke: #0b0b0c;
+      stroke-width: 2.2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .lightStroke{
+      stroke: #0b0b0c;
+      stroke-width: 1.2;
+      opacity: .45;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* subtle entrance */
+    @media (prefers-reduced-motion: no-preference){
+      .fadeIn{
+        animation: fade .6s ease both;
+      }
+      @keyframes fade{
+        from{ opacity:0; transform: translateY(10px); }
+        to{ opacity:1; transform: translateY(0); }
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="wrap">
+    <section class="card fadeIn" aria-label="bassoonplayer">
+      <div>
+        <h1>bassoonplayer.com</h1>
+        <div class="rule" aria-hidden="true"></div>
+        <p class="sub">
+          Bassoon, music, and projects.<br />
+          Simple for now. More soon.
+        </p>
+        <div class="sig">© <span id="year"></span></div>
+      </div>
+
+      <div class="art" aria-hidden="true">
+        <!-- Minimal bassoon line drawing (inline SVG) -->
+        <svg viewBox="0 0 220 520" role="img" aria-label="Bassoon drawing">
+          <!-- Boot joint curve -->
+          <path class="stroke" d="M120 470
+            C86 470, 66 445, 66 415
+            C66 390, 82 370, 105 360
+            C124 352, 138 335, 138 315
+            C138 292, 122 280, 105 270
+            C78 254, 64 230, 64 205
+            C64 168, 92 142, 132 142" />
+
+          <!-- Long body / wing joint -->
+          <path class="stroke" d="M132 142
+            C160 142, 178 124, 178 98
+            C178 76, 165 58, 146 46
+            C132 37, 118 34, 104 34" />
+
+          <!-- Bocal (crook) -->
+          <path class="stroke" d="M104 34
+            C86 34, 76 40, 70 50
+            C64 60, 66 72, 76 78
+            C92 88, 108 82, 116 66" />
+
+          <!-- Small reed tip -->
+          <path class="stroke" d="M116 66
+            C122 54, 132 52, 140 56
+            C132 64, 124 74, 118 82" />
+
+          <!-- Tone hole hints -->
+          <path class="lightStroke" d="M90 410 L120 410" />
+          <path class="lightStroke" d="M92 380 L122 380" />
+          <path class="lightStroke" d="M94 350 L124 350" />
+          <path class="lightStroke" d="M100 320 L130 320" />
+          <path class="lightStroke" d="M110 290 L140 290" />
+          <path class="lightStroke" d="M120 260 L150 260" />
+          <path class="lightStroke" d="M130 230 L160 230" />
+          <path class="lightStroke" d="M138 200 L168 200" />
+          <path class="lightStroke" d="M142 170 L172 170" />
+
+          <!-- Minimal key circles -->
+          <circle cx="86" cy="392" r="6" fill="#0b0b0c" opacity=".9"/>
+          <circle cx="96" cy="362" r="5" fill="#0b0b0c" opacity=".75"/>
+          <circle cx="110" cy="332" r="5" fill="#0b0b0c" opacity=".65"/>
+          <circle cx="126" cy="302" r="6" fill="#0b0b0c" opacity=".85"/>
+          <circle cx="142" cy="270" r="5" fill="#0b0b0c" opacity=".65"/>
+          <circle cx="154" cy="240" r="6" fill="#0b0b0c" opacity=".85"/>
+          <circle cx="166" cy="210" r="5" fill="#0b0b0c" opacity=".6"/>
+
+          <!-- Bell / base -->
+          <path class="stroke" d="M120 470
+            C122 492, 110 505, 92 505
+            C78 505, 64 496, 58 483" />
+        </svg>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
