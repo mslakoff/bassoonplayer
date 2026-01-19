@@ -246,6 +246,16 @@
       min-width:44px;
     }
 
+    /* Calendar buttons inside the table */
+    .calCell{
+      white-space:nowrap;
+    }
+    .calBtn{
+      padding:6px 10px;
+      font-size:12px;
+      margin-right:6px;
+    }
+
     .sig{
       margin-top: 18px;
       font-size: 13px;
@@ -293,6 +303,10 @@
         color:var(--muted);
         margin-bottom:2px;
       }
+
+      .calCell{
+        white-space:normal;
+      }
     }
 
     @media (prefers-reduced-motion: no-preference){
@@ -303,6 +317,22 @@
         from{ opacity:0; transform: translateY(10px); }
         to{ opacity:1; transform: translateY(0); }
       }
+    }
+
+    /* PRINT: clean list */
+    @media print{
+      .adminBox,
+      .rightTools,
+      #togglePast,
+      #printPage,
+      #downloadAllICS{
+        display:none !important;
+      }
+
+      .wrap{ padding:0; }
+      .tableWrap{ border:none; border-radius:0; }
+      thead th{ color:#000; }
+      .calCell{ display:none !important; } /* hide calendar buttons on paper */
     }
   </style>
 </head>
@@ -369,6 +399,8 @@
 
           <div class="rightTools">
             <button class="btn" id="togglePast" type="button">Hide past concerts</button>
+            <button class="btn" id="printPage" type="button">Print</button>
+            <button class="btn" id="downloadAllICS" type="button">Download All (.ics)</button>
 
             <div class="chip" title="Displays today’s date (when viewed).">
               <span>Today:</span>
@@ -435,11 +467,12 @@
               <th style="width: 180px;">Group</th>
               <th style="width: 90px;">$</th>
               <th>Comments</th>
+              <th style="width: 170px;">Calendar</th>
             </tr>
           </thead>
 
           <tbody id="concertsBody">
-            <!-- Add concerts here -->
+            <!-- Your concerts (kept exactly as you entered them) -->
             <tr data-date="2026-02-21">
               <td class="dateCell"></td>
               <td>4:30 PM</td>
@@ -448,15 +481,17 @@
               <td><span class="price">Free</span></td>
               <td>Program: TBD -bring a chair </td>
             </tr>
+
             <tr data-date="2026-02-01">
-             <td class="dateCell"></td>
+              <td class="dateCell"></td>
               <td>6:00 PM</td>
-             <td>Arsht Center - Miami</td>
-             <td>Miami Symphony</td>
-            <td><span class="price">$$$</span></td>
-            <td>Latin American Soundscapes</td>
+              <td>Arsht Center - Miami</td>
+              <td>Miami Symphony</td>
+              <td><span class="price">$$$</span></td>
+              <td>Latin American Soundscapes</td>
             </tr>
-                         <tr data-date="2026-02-28">
+
+            <tr data-date="2026-02-28">
               <td class="dateCell"></td>
               <td>7:00 PM</td>
               <td>Zion Lutheran Church - Deerfield Beach</td>
@@ -465,7 +500,7 @@
               <td>All Mozart</td>
             </tr>
 
-              <tr data-date="2026-03-07">
+            <tr data-date="2026-03-07">
               <td class="dateCell"></td>
               <td>7:00 PM</td>
               <td>Boca Delray Golf and Country Club</td>
@@ -473,33 +508,33 @@
               <td><span class="price">$</span></td>
               <td>All Mozart (same as Feb 28)</td>
             </tr>
-<tr data-date="2026-03-08">
-             <td class="dateCell"></td>
+
+            <tr data-date="2026-03-08">
+              <td class="dateCell"></td>
               <td>6:00 PM</td>
-             <td>Arsht Center - Miami</td>
-             <td>Miami Symphony</td>
-            <td><span class="price">$$$</span></td>
-            <td>Dvorak New World Symphony, American Music</td>
+              <td>Arsht Center - Miami</td>
+              <td>Miami Symphony</td>
+              <td><span class="price">$$$</span></td>
+              <td>Dvorak New World Symphony, American Music</td>
             </tr>
- <tr data-date="2026-04-25">
-             <td class="dateCell"></td>
+
+            <tr data-date="2026-04-25">
+              <td class="dateCell"></td>
               <td>7:30 PM</td>
-             <td>Bailey Hall</td>
-             <td>Broward Symphony</td>
-            <td><span class="price">Free</span></td>
-            <td>TBD</td>
+              <td>Bailey Hall</td>
+              <td>Broward Symphony</td>
+              <td><span class="price">Free</span></td>
+              <td>TBD</td>
             </tr>
-<tr data-date="2026-04-30">
-             <td class="dateCell"></td>
+
+            <tr data-date="2026-04-30">
+              <td class="dateCell"></td>
               <td>6:00 PM</td>
-             <td>Arsht Center - Miami</td>
-             <td>Miami Symphony</td>
-            <td><span class="price">$$$</span></td>
-            <td>Brahms Symphony 3,  Young Persons Guide to the Orchestra</td>            </tr>
-            
-            
-            
-            
+              <td>Arsht Center - Miami</td>
+              <td>Miami Symphony</td>
+              <td><span class="price">$$$</span></td>
+              <td>Brahms Symphony 3,  Young Persons Guide to the Orchestra</td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -515,7 +550,7 @@
     document.getElementById("todayChip").textContent =
       now.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 
-    // Format date as "Tue, Feb 10, 2026"
+    // Format date as "Sat, Feb 01, 2026"
     function formatPrettyDate(isoDate) {
       const d = new Date(isoDate + "T00:00:00");
       if (isNaN(d.getTime())) return isoDate;
@@ -555,7 +590,7 @@
       });
     }
 
-    // NEW: Sort concerts so upcoming are on top, past at bottom (each sorted by date)
+    // Sort concerts so upcoming are on top, past at bottom (each sorted by date)
     function sortConcertsUpcomingFirst() {
       const tbody = document.getElementById("concertsBody");
       if (!tbody) return;
@@ -575,7 +610,7 @@
         // upcoming first, past last
         if (aPast !== bPast) return aPast ? 1 : -1;
 
-        // within the same group (both upcoming OR both past), sort by date
+        // within the same group, sort by date
         return da - db;
       });
 
@@ -610,6 +645,12 @@
       applyHidePast();
     });
 
+    // Print button
+    const printBtn = document.getElementById("printPage");
+    if (printBtn) {
+      printBtn.addEventListener("click", () => window.print());
+    }
+
     // Admin mode: only visible when URL ends with #edit
     function adminMode() {
       const admin = (window.location.hash === "#edit");
@@ -617,7 +658,7 @@
       if (box) box.style.display = admin ? "block" : "none";
     }
 
-    // Admin form logic
+    // Admin form logic (now includes Calendar cell)
     function setupAdminForm() {
       const makeRowBtn = document.getElementById("makeRow");
       const copyRowBtn = document.getElementById("copyRow");
@@ -671,16 +712,240 @@
       });
     }
 
+    // ----- Calendar helpers -----
+
+    function pad2(n){ return String(n).padStart(2,"0"); }
+
+    function parseTimeTo24h(timeStr) {
+      // Accepts "7:30 PM", "7 PM", "19:30"
+      if (!timeStr) return null;
+      const s = timeStr.trim().toUpperCase();
+
+      // 24h format like 19:30
+      let m = s.match(/^(\d{1,2}):(\d{2})$/);
+      if (m) {
+        const hh = parseInt(m[1], 10);
+        const mm = parseInt(m[2], 10);
+        if (hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59) return { hh, mm };
+      }
+
+      // AM/PM format
+      m = s.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)$/);
+      if (!m) return null;
+
+      let hh = parseInt(m[1], 10);
+      let mm = m[2] ? parseInt(m[2], 10) : 0;
+      const ap = m[3];
+
+      if (hh === 12) hh = 0;
+      if (ap === "PM") hh += 12;
+
+      return { hh, mm };
+    }
+
+    function fmtICSDateTimeNY(isoDate, timeStr) {
+      // Returns YYYYMMDDTHHMMSS
+      const t = parseTimeTo24h(timeStr);
+      const ymd = isoDate.replaceAll("-", "");
+      if (!t) return ymd; // all-day fallback
+      return `${ymd}T${pad2(t.hh)}${pad2(t.mm)}00`;
+    }
+
+    function downloadTextFile(filename, text) {
+      const blob = new Blob([text], { type: "text/calendar;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function makeICS({ title, isoDate, timeStr, location, description, durationHours=2 }) {
+      const dt = fmtICSDateTimeNY(isoDate, timeStr);
+      const hasTime = !!parseTimeTo24h(timeStr);
+
+      // Basic escaping for ICS
+      const esc = (s) => (s || "")
+        .replace(/\\/g, "\\\\")
+        .replace(/\n/g, "\\n")
+        .replace(/,/g, "\\,")
+        .replace(/;/g, "\\;");
+
+      const uid = `${isoDate}-${Math.random().toString(16).slice(2)}@bassoonplayer.com`;
+      const stamp = new Date().toISOString().replace(/[-:]/g,"").split(".")[0] + "Z";
+
+      let vevent = `BEGIN:VEVENT
+UID:${uid}
+DTSTAMP:${stamp}
+SUMMARY:${esc(title)}
+LOCATION:${esc(location)}
+DESCRIPTION:${esc(description)}
+`;
+
+      if (hasTime) {
+        vevent += `DTSTART;TZID=America/New_York:${dt}
+DURATION:PT${durationHours}H
+`;
+      } else {
+        vevent += `DTSTART;VALUE=DATE:${dt}
+`;
+      }
+
+      vevent += `END:VEVENT`;
+
+      return `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//bassoonplayer.com//Concerts//EN
+CALSCALE:GREGORIAN
+${vevent}
+END:VCALENDAR`;
+    }
+
+    function makeGoogleCalendarLink({ title, isoDate, timeStr, location, description, durationHours=2 }) {
+      const t = parseTimeTo24h(timeStr);
+      const ymd = isoDate.replaceAll("-", "");
+
+      let start, end;
+
+      if (t) {
+        start = `${ymd}T${pad2(t.hh)}${pad2(t.mm)}00`;
+        const endDate = new Date(`${isoDate}T${pad2(t.hh)}:${pad2(t.mm)}:00`);
+        endDate.setHours(endDate.getHours() + durationHours);
+        const endY = endDate.getFullYear();
+        const endM = pad2(endDate.getMonth()+1);
+        const endD = pad2(endDate.getDate());
+        const endH = pad2(endDate.getHours());
+        const endMin = pad2(endDate.getMinutes());
+        end = `${endY}${endM}${endD}T${endH}${endMin}00`;
+      } else {
+        start = ymd;
+        end = ymd;
+      }
+
+      const params = new URLSearchParams({
+        action: "TEMPLATE",
+        text: title || "Concert",
+        dates: `${start}/${end}`,
+        location: location || "",
+        details: description || ""
+      });
+
+      return `https://calendar.google.com/calendar/render?${params.toString()}`;
+    }
+
+    // Ensure each row has a calendar cell, even if you didn’t add it manually
+    function ensureCalendarCells() {
+      const rows = document.querySelectorAll('tr[data-date]');
+      rows.forEach(row => {
+        // already has?
+        if (row.querySelector(".calCell")) return;
+        const td = document.createElement("td");
+        td.className = "calCell";
+        row.appendChild(td);
+      });
+    }
+
+    function addCalendarButtonsToRows() {
+      const rows = document.querySelectorAll('tr[data-date]');
+      rows.forEach(row => {
+        const isoDate = row.getAttribute("data-date");
+        const tds = row.querySelectorAll("td");
+        const calCell = row.querySelector(".calCell");
+        if (!calCell) return;
+
+        // columns: 0 dateCell, 1 time, 2 location, 3 group, 4 price, 5 comments
+        const timeStr = (tds[1]?.innerText || "").trim();
+        const location = (tds[2]?.innerText || "").trim();
+        const group = (tds[3]?.innerText || "").trim();
+        const comments = (tds[5]?.innerText || "").trim();
+
+        const title = group ? `${group} Concert` : "Concert";
+        const description = comments || "";
+
+        calCell.innerHTML = "";
+
+        // Google button
+        const g = document.createElement("a");
+        g.href = makeGoogleCalendarLink({ title, isoDate, timeStr, location, description, durationHours: 2 });
+        g.target = "_blank";
+        g.rel = "noopener";
+        g.className = "btn calBtn";
+        g.textContent = "Google";
+
+        // ICS button
+        const icsBtn = document.createElement("button");
+        icsBtn.type = "button";
+        icsBtn.className = "btn calBtn";
+        icsBtn.textContent = ".ics";
+        icsBtn.addEventListener("click", () => {
+          const ics = makeICS({ title, isoDate, timeStr, location, description, durationHours: 2 });
+          const safeName = (group || "concert").replace(/[^\w\-]+/g, "-");
+          downloadTextFile(`${isoDate}-${safeName}.ics`, ics);
+        });
+
+        calCell.appendChild(g);
+        calCell.appendChild(icsBtn);
+      });
+    }
+
+    // Download all upcoming as a single .ics file
+    const allBtn = document.getElementById("downloadAllICS");
+    if (allBtn) {
+      allBtn.addEventListener("click", () => {
+        const rows = Array.from(document.querySelectorAll('tr[data-date]'));
+        const today = new Date(); today.setHours(0,0,0,0);
+
+        const upcoming = rows
+          .map(r => {
+            const isoDate = r.getAttribute("data-date");
+            const d = new Date(isoDate + "T00:00:00");
+            return { r, isoDate, d };
+          })
+          .filter(x => !isNaN(x.d.getTime()) && x.d >= today);
+
+        let body = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//bassoonplayer.com//Concerts//EN
+CALSCALE:GREGORIAN
+`;
+
+        upcoming.forEach(({ r, isoDate }) => {
+          const tds = r.querySelectorAll("td");
+          const timeStr = (tds[1]?.innerText || "").trim();
+          const location = (tds[2]?.innerText || "").trim();
+          const group = (tds[3]?.innerText || "").trim();
+          const comments = (tds[5]?.innerText || "").trim();
+
+          const title = group ? `${group} Concert` : "Concert";
+          const description = comments || "";
+
+          const one = makeICS({ title, isoDate, timeStr, location, description, durationHours: 2 });
+
+          // Pull only the VEVENT block so we can combine multiple events
+          const parts = one.split("BEGIN:VEVENT");
+          if (parts.length > 1) {
+            const veventPlus = "BEGIN:VEVENT" + parts[1].split("END:VCALENDAR")[0];
+            body += veventPlus;
+          }
+        });
+
+        body += "END:VCALENDAR";
+        downloadTextFile("upcoming-concerts.ics", body);
+      });
+    }
+
     // Init order matters:
-    // 1) mark past (so sorting can know what's past)
-    // 2) sort (upcoming first, past bottom)
-    // 3) populate date text
-    // 4) apply hide/show state
     adminMode();
     setupAdminForm();
+
     markPastConcerts();
     sortConcertsUpcomingFirst();
     populateDateCells();
+    ensureCalendarCells();
+    addCalendarButtonsToRows();
     applyHidePast();
 
     window.addEventListener("hashchange", () => {
