@@ -1,0 +1,691 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Marc’s Upcoming Concerts</title>
+  <meta name="description" content="Marc’s Upcoming Concerts" />
+
+  <!-- Optional: keep it out of Google -->
+  <!-- <meta name="robots" content="noindex, nofollow"> -->
+
+  <style>
+    :root{
+      --bg:#ffffff;
+      --text:#0b0b0c;
+      --muted:#6b6b70;
+      --line:#e7e7ea;
+      --chip:#f5f5f7;
+      --soft:#fafafb;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      letter-spacing:-0.02em;
+    }
+
+    .wrap{
+      min-height:100vh;
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      padding:48px 20px;
+    }
+
+    .card{
+      width:min(980px, 100%);
+      display:block;
+    }
+
+    h1{
+      margin:0;
+      font-size: clamp(28px, 4.4vw, 44px);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.04em;
+    }
+
+    .rule{
+      margin:16px 0 14px 0;
+      height:1px;
+      width:160px;
+      background:var(--line);
+    }
+
+    .topbar{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      align-items:end;
+      gap:16px;
+    }
+
+    .rightCol{
+      display:flex;
+      align-items:flex-end;
+      gap:18px;
+    }
+
+    .rightTools{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border:1px solid var(--line);
+      background:var(--chip);
+      color:var(--muted);
+      border-radius:999px;
+      font-size:13px;
+      white-space:nowrap;
+    }
+
+    .btn{
+      appearance:none;
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--text);
+      border-radius:999px;
+      padding:8px 12px;
+      font-size:13px;
+      cursor:pointer;
+      transition: transform .08s ease;
+    }
+    .btn:active{ transform: translateY(1px); }
+
+    .logoWrap{
+      display:flex;
+      align-items:flex-end;
+      justify-content:flex-end;
+    }
+
+    .logo{
+      width: 92px;
+      height:auto;
+      opacity:0.92;
+      display:block;
+    }
+
+    .stroke{
+      stroke:#0b0b0c;
+      stroke-width:2.2;
+      fill:none;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+    }
+    .lightStroke{
+      stroke:#0b0b0c;
+      stroke-width:1.2;
+      opacity:.45;
+      fill:none;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+    }
+
+    /* Admin form container */
+    .adminBox{
+      display:none; /* shown only in #edit mode */
+      margin-top: 16px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:14px;
+      background:#fff;
+    }
+
+    .adminGrid{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:flex-end;
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width: 140px;
+    }
+
+    .field label{
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .field input{
+      padding:10px;
+      border:1px solid var(--line);
+      border-radius:10px;
+      font-size:14px;
+    }
+
+    .field.wide{ flex:1; min-width:240px; }
+    .field.wider{ flex:1; min-width:320px; }
+
+    .rowOutput{
+      margin-top:10px;
+      width:100%;
+      padding:12px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size:12px;
+      resize: vertical;
+    }
+
+    .adminHint{
+      margin-top:8px;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .tableWrap{
+      margin-top: 16px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      overflow:hidden;
+      background:#fff;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:14px;
+    }
+
+    thead th{
+      text-align:left;
+      font-weight:600;
+      color:var(--muted);
+      background:var(--soft);
+      border-bottom:1px solid var(--line);
+      padding:12px 14px;
+      vertical-align:bottom;
+    }
+
+    tbody td{
+      padding:14px;
+      border-bottom:1px solid var(--line);
+      vertical-align:top;
+    }
+
+    tbody tr:last-child td{
+      border-bottom:none;
+    }
+
+    /* Past concerts styling */
+    tr.past{
+      opacity:0.42;
+    }
+    tr.past td{
+      color:var(--muted);
+    }
+
+    .price{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:5px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:var(--chip);
+      font-size:13px;
+      line-height:1;
+      white-space:nowrap;
+      min-width:44px;
+    }
+
+    .sig{
+      margin-top: 18px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* Hide per-cell labels on desktop */
+    .label{ display:none; }
+
+    @media (max-width: 760px){
+      .topbar{
+        grid-template-columns: 1fr;
+        align-items:start;
+      }
+
+      .rightCol{
+        justify-content:space-between;
+        align-items:center;
+      }
+
+      .logo{
+        width:70px;
+      }
+
+      thead{ display:none; }
+      table, tbody, tr, td{ display:block; width:100%; }
+
+      tbody tr{
+        padding:14px 14px 6px 14px;
+        border-bottom:1px solid var(--line);
+      }
+
+      tbody tr:last-child{
+        border-bottom:none;
+      }
+
+      tbody td{
+        border-bottom:none;
+        padding:0 0 10px 0;
+      }
+
+      .label{
+        display:block;
+        font-size:12px;
+        color:var(--muted);
+        margin-bottom:2px;
+      }
+    }
+
+    @media (prefers-reduced-motion: no-preference){
+      .fadeIn{
+        animation: fade .6s ease both;
+      }
+      @keyframes fade{
+        from{ opacity:0; transform: translateY(10px); }
+        to{ opacity:1; transform: translateY(0); }
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="wrap">
+    <section class="card fadeIn" aria-label="Upcoming concerts">
+
+      <div class="topbar">
+        <div>
+          <h1>Marc’s Upcoming Concerts</h1>
+          <div class="rule" aria-hidden="true"></div>
+        </div>
+
+        <div class="rightCol">
+          <div class="logoWrap" aria-hidden="true">
+            <!-- Full bassoon drawing -->
+            <svg class="logo" viewBox="0 0 220 520" role="img" aria-label="Bassoon logo drawing">
+              <path class="stroke" d="M120 470
+                C86 470, 66 445, 66 415
+                C66 390, 82 370, 105 360
+                C124 352, 138 335, 138 315
+                C138 292, 122 280, 105 270
+                C78 254, 64 230, 64 205
+                C64 168, 92 142, 132 142" />
+
+              <path class="stroke" d="M132 142
+                C160 142, 178 124, 178 98
+                C178 76, 165 58, 146 46
+                C132 37, 118 34, 104 34" />
+
+              <path class="stroke" d="M104 34
+                C86 34, 76 40, 70 50
+                C64 60, 66 72, 76 78
+                C92 88, 108 82, 116 66" />
+
+              <path class="stroke" d="M116 66
+                C122 54, 132 52, 140 56
+                C132 64, 124 74, 118 82" />
+
+              <path class="lightStroke" d="M90 410 L120 410" />
+              <path class="lightStroke" d="M92 380 L122 380" />
+              <path class="lightStroke" d="M94 350 L124 350" />
+              <path class="lightStroke" d="M100 320 L130 320" />
+              <path class="lightStroke" d="M110 290 L140 290" />
+              <path class="lightStroke" d="M120 260 L150 260" />
+              <path class="lightStroke" d="M130 230 L160 230" />
+              <path class="lightStroke" d="M138 200 L168 200" />
+              <path class="lightStroke" d="M142 170 L172 170" />
+
+              <circle cx="86" cy="392" r="6" fill="#0b0b0c" opacity=".9"/>
+              <circle cx="96" cy="362" r="5" fill="#0b0b0c" opacity=".75"/>
+              <circle cx="110" cy="332" r="5" fill="#0b0b0c" opacity=".65"/>
+              <circle cx="126" cy="302" r="6" fill="#0b0b0c" opacity=".85"/>
+              <circle cx="142" cy="270" r="5" fill="#0b0b0c" opacity=".65"/>
+              <circle cx="154" cy="240" r="6" fill="#0b0b0c" opacity=".85"/>
+              <circle cx="166" cy="210" r="5" fill="#0b0b0c" opacity=".6"/>
+
+              <path class="stroke" d="M120 470
+                C122 492, 110 505, 92 505
+                C78 505, 64 496, 58 483" />
+            </svg>
+          </div>
+
+          <div class="rightTools">
+            <button class="btn" id="togglePast" type="button">Hide past concerts</button>
+
+            <div class="chip" title="Displays today’s date (when viewed).">
+              <span>Today:</span>
+              <strong id="todayChip">—</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADMIN FORM (only visible with #edit) -->
+      <div class="adminBox" id="adminBox" aria-label="Admin concert entry form">
+        <div class="adminGrid">
+          <div class="field">
+            <label>Date</label>
+            <input id="fDate" type="date" />
+          </div>
+
+          <div class="field">
+            <label>Time</label>
+            <input id="fTime" type="text" placeholder="7:30 PM" />
+          </div>
+
+          <div class="field wider">
+            <label>Location</label>
+            <input id="fLocation" type="text" placeholder="Venue — City, State" />
+          </div>
+
+          <div class="field">
+            <label>Group</label>
+            <input id="fGroup" type="text" placeholder="New River Orchestra" />
+          </div>
+
+          <div class="field" style="min-width:120px;">
+            <label>$</label>
+            <input id="fPrice" type="text" placeholder="$$ or Free" />
+          </div>
+
+          <div class="field wide">
+            <label>Comments</label>
+            <input id="fComments" type="text" placeholder="Program: TBD" />
+          </div>
+
+          <button class="btn" id="makeRow" type="button">Generate Row</button>
+          <button class="btn" id="copyRow" type="button" disabled>Copy</button>
+        </div>
+
+        <textarea id="rowOutput" class="rowOutput" rows="3"
+          placeholder="Your generated HTML row will appear here..."></textarea>
+
+        <div class="adminHint">
+          Use admin mode:
+          <code>concerts.html#edit</code>
+          → Generate Row → Copy → paste into the table → Commit in GitHub.
+        </div>
+      </div>
+
+      <div class="tableWrap" role="region" aria-label="Upcoming concerts table">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 190px;">Date</th>
+              <th style="width: 110px;">Time</th>
+              <th>Location</th>
+              <th style="width: 180px;">Group</th>
+              <th style="width: 90px;">$</th>
+              <th>Comments</th>
+            </tr>
+          </thead>
+
+          <tbody id="concertsBody">
+            <!-- Add concerts here -->
+            <tr data-date="2026-02-21">
+              <td class="dateCell"></td>
+              <td>4:30 PM</td>
+              <td>Doral Central Park (outdoors)</td>
+              <td>Miami Symphony</td>
+              <td><span class="price">Free</span></td>
+              <td>Program: TBD -bring a chair </td>
+            </tr>
+            <tr data-date="2026-02-01">
+             <td class="dateCell"></td>
+              <td>6:00 PM</td>
+             <td>Arsht Center - Miami</td>
+             <td>Miami Symphony</td>
+            <td><span class="price">$$$</span></td>
+            <td>Latin American Soundscapes</td>
+            </tr>
+                         <tr data-date="2026-02-28">
+              <td class="dateCell"></td>
+              <td>7:00 PM</td>
+              <td>Zion Lutheran Church - Deerfield Beach</td>
+              <td>New Directions Chamber Winds</td>
+              <td><span class="price">$</span></td>
+              <td>All Mozart</td>
+            </tr>
+
+              <tr data-date="2026-03-07">
+              <td class="dateCell"></td>
+              <td>7:00 PM</td>
+              <td>Boca Delray Golf and Country Club</td>
+              <td>New Directions Chamber Winds</td>
+              <td><span class="price">$</span></td>
+              <td>All Mozart (same as Feb 28)</td>
+            </tr>
+<tr data-date="2026-03-08">
+             <td class="dateCell"></td>
+              <td>6:00 PM</td>
+             <td>Arsht Center - Miami</td>
+             <td>Miami Symphony</td>
+            <td><span class="price">$$$</span></td>
+            <td>Dvorak New World Symphony, American Music</td>
+            </tr>
+ <tr data-date="2026-04-25">
+             <td class="dateCell"></td>
+              <td>7:30 PM</td>
+             <td>Bailey Hall</td>
+             <td>Broward Symphony</td>
+            <td><span class="price">Free</span></td>
+            <td>TBD</td>
+            </tr>
+<tr data-date="2026-04-30">
+             <td class="dateCell"></td>
+              <td>6:00 PM</td>
+             <td>Arsht Center - Miami</td>
+             <td>Miami Symphony</td>
+            <td><span class="price">$$$</span></td>
+            <td>Brahms Symphony 3,  Young Persons Guide to the Orchestra</td>            </tr>
+            
+            
+            
+            
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sig">© <span id="year"></span></div>
+    </section>
+  </main>
+
+  <script>
+    // Footer year + Today chip
+    document.getElementById("year").textContent = new Date().getFullYear();
+    const now = new Date();
+    document.getElementById("todayChip").textContent =
+      now.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+
+    // Format date as "Tue, Feb 10, 2026"
+    function formatPrettyDate(isoDate) {
+      const d = new Date(isoDate + "T00:00:00");
+      if (isNaN(d.getTime())) return isoDate;
+      return d.toLocaleDateString(undefined, {
+        weekday: "short",
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      });
+    }
+
+    // Fill in Date column automatically from data-date
+    function populateDateCells() {
+      const rows = document.querySelectorAll('tr[data-date]');
+      rows.forEach(row => {
+        const iso = row.getAttribute("data-date");
+        const cell = row.querySelector(".dateCell");
+        if (cell) cell.textContent = formatPrettyDate(iso);
+      });
+    }
+
+    // Dim past concerts
+    function markPastConcerts() {
+      const today = new Date();
+      today.setHours(0,0,0,0);
+
+      const rows = document.querySelectorAll('tr[data-date]');
+      rows.forEach(row => {
+        const iso = row.getAttribute('data-date'); // YYYY-MM-DD
+        const d = new Date(iso + "T00:00:00");
+        if (!isNaN(d.getTime()) && d < today) {
+          row.classList.add("past");
+        } else {
+          row.classList.remove("past");
+          row.style.display = "";
+        }
+      });
+    }
+
+    // NEW: Sort concerts so upcoming are on top, past at bottom (each sorted by date)
+    function sortConcertsUpcomingFirst() {
+      const tbody = document.getElementById("concertsBody");
+      if (!tbody) return;
+
+      const today = new Date();
+      today.setHours(0,0,0,0);
+
+      const rows = Array.from(tbody.querySelectorAll('tr[data-date]'));
+
+      rows.sort((a, b) => {
+        const da = new Date(a.getAttribute("data-date") + "T00:00:00");
+        const db = new Date(b.getAttribute("data-date") + "T00:00:00");
+
+        const aPast = da < today;
+        const bPast = db < today;
+
+        // upcoming first, past last
+        if (aPast !== bPast) return aPast ? 1 : -1;
+
+        // within the same group (both upcoming OR both past), sort by date
+        return da - db;
+      });
+
+      rows.forEach(r => tbody.appendChild(r));
+    }
+
+    // Toggle hiding past concerts
+    let hidePast = false;
+    const toggleBtn = document.getElementById("togglePast");
+
+    function applyHidePast() {
+      const rows = document.querySelectorAll('tr[data-date]');
+      let pastCount = 0;
+
+      rows.forEach(r => {
+        const isPast = r.classList.contains("past");
+        if (isPast) {
+          pastCount++;
+          r.style.display = hidePast ? "none" : "";
+        }
+      });
+
+      if (pastCount === 0) {
+        toggleBtn.textContent = "Hide past concerts";
+      } else {
+        toggleBtn.textContent = hidePast ? "Show past concerts" : "Hide past concerts";
+      }
+    }
+
+    toggleBtn.addEventListener("click", () => {
+      hidePast = !hidePast;
+      applyHidePast();
+    });
+
+    // Admin mode: only visible when URL ends with #edit
+    function adminMode() {
+      const admin = (window.location.hash === "#edit");
+      const box = document.getElementById("adminBox");
+      if (box) box.style.display = admin ? "block" : "none";
+    }
+
+    // Admin form logic
+    function setupAdminForm() {
+      const makeRowBtn = document.getElementById("makeRow");
+      const copyRowBtn = document.getElementById("copyRow");
+      const output = document.getElementById("rowOutput");
+
+      if (!makeRowBtn || !copyRowBtn || !output) return;
+
+      const esc = (s) =>
+        (s || "")
+          .replace(/&/g,"&amp;")
+          .replace(/</g,"&lt;")
+          .replace(/>/g,"&gt;");
+
+      makeRowBtn.addEventListener("click", () => {
+        const date = document.getElementById("fDate").value.trim(); // YYYY-MM-DD
+        const time = document.getElementById("fTime").value.trim();
+        const location = document.getElementById("fLocation").value.trim();
+        const group = document.getElementById("fGroup").value.trim();
+        const price = (document.getElementById("fPrice").value.trim() || "Free");
+        const comments = document.getElementById("fComments").value.trim();
+
+        if (!date) {
+          output.value = "Please choose a date.";
+          copyRowBtn.disabled = true;
+          return;
+        }
+
+        const row =
+`<tr data-date="${esc(date)}">
+  <td class="dateCell"></td>
+  <td>${esc(time)}</td>
+  <td>${esc(location)}</td>
+  <td>${esc(group)}</td>
+  <td><span class="price">${esc(price)}</span></td>
+  <td>${esc(comments)}</td>
+</tr>`;
+
+        output.value = row;
+        copyRowBtn.disabled = false;
+      });
+
+      copyRowBtn.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(output.value);
+          copyRowBtn.textContent = "Copied!";
+          setTimeout(() => (copyRowBtn.textContent = "Copy"), 900);
+        } catch {
+          output.focus();
+          output.select();
+        }
+      });
+    }
+
+    // Init order matters:
+    // 1) mark past (so sorting can know what's past)
+    // 2) sort (upcoming first, past bottom)
+    // 3) populate date text
+    // 4) apply hide/show state
+    adminMode();
+    setupAdminForm();
+    markPastConcerts();
+    sortConcertsUpcomingFirst();
+    populateDateCells();
+    applyHidePast();
+
+    window.addEventListener("hashchange", () => {
+      adminMode();
+    });
+  </script>
+</body>
+</html>
