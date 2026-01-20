@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Marc’s Upcoming Concerts</title>
+  <meta name="description" content="Marc’s Upcoming Concerts" />
+
+  <style>
+    :root{
+      --bg:#ffffff;
+      --text:#0b0b0c;
+      --muted:#6b6b70;
+      --line:#e7e7ea;
+      --chip:#f5f5f7;
+      --soft:#fafafb;
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      letter-spacing:-0.02em;
+    }
+
+    .wrap{
+      min-height:100vh;
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      padding:48px 20px;
+    }
+
+    .card{
+      width:min(1400px, 100%);
+      display:block;
+    }
+
+    h1{
+      margin:0;
+      font-size: clamp(28px, 4.4vw, 44px);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.04em;
+    }
+
+    .rule{
+      margin:16px 0 14px 0;
+      height:1px;
+      width:160px;
+      background:var(--line);
+    }
+
+    .topbar{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      align-items:end;
+      gap:16px;
+    }
+
+    .rightCol{
+      display:flex;
+      align-items:flex-end;
+      gap:18px;
+    }
+
+    .rightTools{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border:1px solid var(--line);
+      background:var(--chip);
+      color:var(--muted);
+      border-radius:999px;
+      font-size:13px;
+      white-space:nowrap;
+    }
+
+    .btn{
+      appearance:none;
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--text);
+      border-radius:999px;
+      padding:8px 12px;
+      font-size:13px;
+      cursor:pointer;
+      transition: transform .08s ease;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+    }
+    .btn:active{ transform: translateY(1px); }
+
+    .logoWrap{
+      display:flex;
+      align-items:flex-end;
+      justify-content:flex-end;
+    }
+
+    .logo{
+      width: 92px;
+      height:auto;
+      opacity:0.92;
+      display:block;
+    }
+
+    .stroke{
+      stroke:#0b0b0c;
+      stroke-width:2.2;
+      fill:none;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+    }
+    .lightStroke{
+      stroke:#0b0b0c;
+      stroke-width:1.2;
+      opacity:.45;
+      fill:none;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+    }
+
+    .tableWrap{
+      margin-top: 16px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      /* Allow the table to scroll horizontally if space gets tight, rather than clipping content */
+      overflow-x:auto;
+      overflow-y:hidden;
+      background:#fff;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:14px;
+    }
+
+    thead th{
+      text-align:left;
+      font-weight:600;
+      color:var(--muted);
+      background:var(--soft);
+      border-bottom:1px solid var(--line);
+      padding:12px 14px;
+      vertical-align:bottom;
+    }
+
+    tbody td{
+      padding:14px;
+      border-bottom:1px solid var(--line);
+      vertical-align:top;
+    }
+
+    /* Prevent the Location/Comments columns from collapsing too narrow,
+       which can cause each word to wrap onto its own line. */
+    .locationCol{ min-width: 260px; }
+    .commentsCol{ min-width: 260px; }
+
+    /* Keep the Calendar header from getting clipped and keep buttons on one line when possible. */
+    .calendarCol{ min-width: 200px; white-space:nowrap; }
+
+    /* Keep Date/Time from wrapping into multiple lines (e.g. "Sun, Feb 1, 2026"). */
+    .dateCol, .timeCol, .dateCell, .timeCell{ white-space:nowrap; }
+
+    tbody tr:last-child td{
+      border-bottom:none;
+    }
+
+    tr.past{
+      opacity:0.42;
+    }
+    tr.past td{
+      color:var(--muted);
+    }
+
+    .price{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:5px 10px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:var(--chip);
+      font-size:13px;
+      line-height:1;
+      white-space:nowrap;
+      min-width:44px;
+    }
+
+    .calCell{
+      display:flex;
+      gap:6px;
+      flex-wrap:nowrap;
+      white-space:nowrap;
+    }
+    .calBtn{
+      padding:6px 8px;
+      font-size:11px;
+      margin-right:0;
+    }
+
+    .sig{
+      margin-top: 18px;
+      font-size: 13px;
+      color: var(--muted);
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .statusMsg{
+      padding:18px;
+      color:var(--muted);
+    }
+
+    @media (max-width: 760px){
+  .locationCol,
+  .commentsCol{
+    min-width: 0;
+  }
+
+      .topbar{
+        grid-template-columns: 1fr;
+        align-items:start;
+      }
+
+      .rightCol{
+        justify-content:space-between;
+        align-items:center;
+      }
+
+      .logo{
+        width:70px;
+      }
+
+      thead{ display:none; }
+      table, tbody, tr, td{ display:block; width:100%; }
+
+      tbody tr{
+        padding:14px 14px 6px 14px;
+        border-bottom:1px solid var(--line);
+      }
+
+      tbody tr:last-child{
+        border-bottom:none;
+      }
+
+      tbody td{
+        border-bottom:none;
+        padding:0 0 10px 0;
+      }
+
+      .calCell{
+        white-space:normal;
+        flex-wrap:wrap;
+      }
+    }
+
+    @media print{
+      .rightTools, #togglePast, #printPage, #downloadAllICS{
+        display:none !important;
+      }
+      .wrap{ padding:0; }
+      .tableWrap{ border:none; border-radius:0; }
+      thead th{ color:#000; }
+      .calCell{ display:none !important; }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="wrap">
+    <section class="card" aria-label="Upcoming concerts">
+
+      <div class="topbar">
+        <div>
+          <h1>Marc’s Upcoming Concerts</h1>
+          <div class="rule" aria-hidden="true"></div>
+        </div>
+
+        <div class="rightCol">
+          <div class="logoWrap" aria-hidden="true">
+            <!-- Bassoon logo -->
+            <svg class="logo" viewBox="0 0 220 520" role="img" aria-label="Bassoon logo drawing">
+              <path class="stroke" d="M120 470
+                C86 470, 66 445, 66 415
+                C66 390, 82 370, 105 360
+                C124 352, 138 335, 138 315
+                C138 292, 122 280, 105 270
+                C78 254, 64 230, 64 205
+                C64 168, 92 142, 132 142" />
+              <path class="stroke" d="M132 142
+                C160 142, 178 124, 178 98
+                C178 76, 165 58, 146 46
+                C132 37, 118 34, 104 34" />
+              <path class="stroke" d="M104 34
+                C86 34, 76 40, 70 50
+                C64 60, 66 72, 76 78
+                C92 88, 108 82, 116 66" />
+              <path class="stroke" d="M116 66
+                C122 54, 132 52, 140 56
+                C132 64, 124 74, 118 82" />
+              <path class="lightStroke" d="M90 410 L120 410" />
+              <path class="lightStroke" d="M92 380 L122 380" />
+              <path class="lightStroke" d="M94 350 L124 350" />
+              <path class="lightStroke" d="M100 320 L130 320" />
+              <path class="lightStroke" d="M110 290 L140 290" />
+              <path class="lightStroke" d="M120 260 L150 260" />
+              <path class="lightStroke" d="M130 230 L160 230" />
+              <path class="lightStroke" d="M138 200 L168 200" />
+              <path class="lightStroke" d="M142 170 L172 170" />
+              <circle cx="86" cy="392" r="6" fill="#0b0b0c" opacity=".9"/>
+              <circle cx="96" cy="362" r="5" fill="#0b0b0c" opacity=".75"/>
+              <circle cx="110" cy="332" r="5" fill="#0b0b0c" opacity=".65"/>
+              <circle cx="126" cy="302" r="6" fill="#0b0b0c" opacity=".85"/>
+              <circle cx="142" cy="270" r="5" fill="#0b0b0c" opacity=".65"/>
+              <circle cx="154" cy="240" r="6" fill="#0b0b0c" opacity=".85"/>
+              <circle cx="166" cy="210" r="5" fill="#0b0b0c" opacity=".6"/>
+              <path class="stroke" d="M120 470
+                C122 492, 110 505, 92 505
+                C78 505, 64 496, 58 483" />
+            </svg>
+          </div>
+
+          <div class="rightTools">
+            <button class="btn" id="togglePast" type="button">Hide past concerts</button>
+            <button class="btn" id="printPage" type="button">Print</button>
+            <button class="btn" id="downloadAllICS" type="button">Download All (.ics)</button>
+            <div class="chip">
+              <span>Today:</span>
+              <strong id="todayChip">—</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tableWrap" role="region" aria-label="Upcoming concerts table">
+        <table>
+          <thead>
+            <tr>
+              <th class="dateCol" style="width: 190px;">Date</th>
+              <th class="timeCol" style="width: 110px;">Time</th>
+              <th class="locationCol">Location</th>
+              <th style="width: 180px;">Group</th>
+              <th style="width: 90px;">$</th>
+              <th class="commentsCol">Comments</th>
+              <th class="calendarCol" style="width: 200px;">Calendar</th>
+            </tr>
+          </thead>
+
+          <tbody id="concertsBody">
+            <tr>
+              <td colspan="7" class="statusMsg">Loading concerts from Google Sheet…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sig">
+        <div>© <span id="year"></span></div>
+        <div id="loadedNote"></div>
+      </div>
+
+    </section>
+  </main>
+
+  <script>
+    // ========= YOUR GOOGLE SHEET =========
+    const SHEET_ID  = "1oKfS6SCUUDjMYesJ1vubIrRfb3xcpRg3Jg_tqw91TtU";
+    const SHEET_GID = 0; // if your concerts are on another tab, change this to the gid number
+    // ====================================
+
+    // Footer year + Today chip
+    document.getElementById("year").textContent = new Date().getFullYear();
+    const now = new Date();
+    document.getElementById("todayChip").textContent =
+      now.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+
+    // ---------- Date/time parsing helpers ----------
+    function parseGVizDateValueToISO(v) {
+      // v can look like: Date(2026,1,1)  where month is 0-based
+      if (!v) return "";
+      const m = String(v).match(/^Date\((\d{4}),(\d{1,2}),(\d{1,2})/);
+      if (!m) return "";
+      const y = parseInt(m[1], 10);
+      const mon0 = parseInt(m[2], 10);
+      const d = parseInt(m[3], 10);
+      return `${y}-${String(mon0 + 1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+    }
+
+    function parseUSDateToISO(s) {
+      // Accept: 2/21/25, 2/21/2025, 02/21/25, etc.
+      if (!s) return "";
+      const m = String(s).trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);
+      if (!m) return "";
+
+      const mm = parseInt(m[1], 10);
+      const dd = parseInt(m[2], 10);
+      let yy = parseInt(m[3], 10);
+
+      // Interpret 2-digit year as 2000-2099
+      if (m[3].length === 2) yy = 2000 + yy;
+
+      const iso = `${yy}-${String(mm).padStart(2,"0")}-${String(dd).padStart(2,"0")}`;
+      const d = new Date(iso + "T00:00:00");
+      if (isNaN(d.getTime())) return "";
+      return iso;
+    }
+
+    function getISODateFromCell(cell) {
+      if (!cell) return "";
+
+      // Best case: raw Date(...) exists
+      const isoFromV = parseGVizDateValueToISO(cell.v);
+      if (isoFromV) return isoFromV;
+
+      // Next: formatted string (like 2/21/25)
+      const isoFromF = parseUSDateToISO(cell.f);
+      if (isoFromF) return isoFromF;
+
+      // Last resort: try raw string in v
+      const isoFromVText = parseUSDateToISO(cell.v);
+      if (isoFromVText) return isoFromVText;
+
+      return "";
+    }
+
+    function formatPrettyDateFromISO(isoDate) {
+      const d = new Date(isoDate + "T00:00:00");
+      if (isNaN(d.getTime())) return isoDate;
+      return d.toLocaleDateString(undefined, {
+        weekday: "short",
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      });
+    }
+
+    function getCellText(cell) {
+      // Prefer formatted value .f so time doesn't show Date(1899,...)
+      if (!cell) return "";
+      if (cell.f != null) return String(cell.f).trim();
+      if (cell.v != null) return String(cell.v).trim();
+      return "";
+    }
+
+    // ---------- Calendar helpers ----------
+    function pad2(n){ return String(n).padStart(2,"0"); }
+
+    function parseTimeTo24h(timeStr) {
+      if (!timeStr) return null;
+      const s = timeStr.trim().toUpperCase();
+
+      // 24h: 19:30
+      let m = s.match(/^(\d{1,2}):(\d{2})$/);
+      if (m) {
+        const hh = parseInt(m[1], 10);
+        const mm = parseInt(m[2], 10);
+        if (hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59) return { hh, mm };
+      }
+
+      // AM/PM: 7:30 PM or 7 PM
+      m = s.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)$/);
+      if (!m) return null;
+
+      let hh = parseInt(m[1], 10);
+      let mm = m[2] ? parseInt(m[2], 10) : 0;
+      const ap = m[3];
+
+      if (hh === 12) hh = 0;
+      if (ap === "PM") hh += 12;
+
+      return { hh, mm };
+    }
+
+    function fmtICSDateTimeNY(isoDate, timeStr) {
+      const t = parseTimeTo24h(timeStr);
+      const ymd = isoDate.replaceAll("-", "");
+      if (!t) return ymd; // all-day fallback
+      return `${ymd}T${pad2(t.hh)}${pad2(t.mm)}00`;
+    }
+
+    function downloadTextFile(filename, text) {
+      const blob = new Blob([text], { type: "text/calendar;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function makeICS({ title, isoDate, timeStr, location, description, durationHours=2 }) {
+      const dt = fmtICSDateTimeNY(isoDate, timeStr);
+      const hasTime = !!parseTimeTo24h(timeStr);
+
+      const esc = (s) => (s || "")
+        .replace(/\\/g, "\\\\")
+        .replace(/\n/g, "\\n")
+        .replace(/,/g, "\\,")
+        .replace(/;/g, "\\;");
+
+      const uid = `${isoDate}-${Math.random().toString(16).slice(2)}@bassoonplayer.com`;
+      const stamp = new Date().toISOString().replace(/[-:]/g,"").split(".")[0] + "Z";
+
+      let vevent = `BEGIN:VEVENT
+UID:${uid}
+DTSTAMP:${stamp}
+SUMMARY:${esc(title)}
+LOCATION:${esc(location)}
+DESCRIPTION:${esc(description)}
+`;
+
+      if (hasTime) {
+        vevent += `DTSTART;TZID=America/New_York:${dt}
+DURATION:PT${durationHours}H
+`;
+      } else {
+        vevent += `DTSTART;VALUE=DATE:${dt}
+`;
+      }
+
+      vevent += `END:VEVENT`;
+
+      return `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//bassoonplayer.com//Concerts//EN
+CALSCALE:GREGORIAN
+${vevent}
+END:VCALENDAR`;
+    }
+
+    function makeGoogleCalendarLink({ title, isoDate, timeStr, location, description, durationHours=2 }) {
+      const t = parseTimeTo24h(timeStr);
+      const ymd = isoDate.replaceAll("-", "");
+
+      let start, end;
+
+      if (t) {
+        start = `${ymd}T${pad2(t.hh)}${pad2(t.mm)}00`;
+        const endDate = new Date(`${isoDate}T${pad2(t.hh)}:${pad2(t.mm)}:00`);
+        endDate.setHours(endDate.getHours() + durationHours);
+
+        const endY = endDate.getFullYear();
+        const endM = pad2(endDate.getMonth()+1);
+        const endD = pad2(endDate.getDate());
+        const endH = pad2(endDate.getHours());
+        const endMin = pad2(endDate.getMinutes());
+        end = `${endY}${endM}${endD}T${endH}${endMin}00`;
+      } else {
+        start = ymd;
+        end = ymd;
+      }
+
+      const params = new URLSearchParams({
+        action: "TEMPLATE",
+        text: title || "Concert",
+        dates: `${start}/${end}`,
+        location: location || "",
+        details: description || ""
+      });
+
+      return `https://calendar.google.com/calendar/render?${params.toString()}`;
+    }
+
+    // ---------- Row creation ----------
+    function buildRow({ isoDate, time, location, group, price, comments }) {
+      const tr = document.createElement("tr");
+      tr.setAttribute("data-date", isoDate);
+
+      tr.innerHTML = `
+        <td class="dateCell">${formatPrettyDateFromISO(isoDate)}</td>
+        <td class="timeCell">${time || ""}</td>
+        <td class="locationCol">${location || ""}</td>
+        <td>${group || ""}</td>
+        <td><span class="price">${price || ""}</span></td>
+        <td class="commentsCol">${comments || ""}</td>
+        <td class="calCell"></td>
+      `;
+
+      // Calendar buttons
+      const calCell = tr.querySelector(".calCell");
+
+      const title = group ? `${group} Concert` : "Concert";
+      const description = comments || "";
+
+      const g = document.createElement("a");
+      g.href = makeGoogleCalendarLink({
+        title,
+        isoDate,
+        timeStr: time,
+        location,
+        description,
+        durationHours: 2
+      });
+      g.target = "_blank";
+      g.rel = "noopener";
+      g.className = "btn calBtn";
+      g.textContent = "Google";
+
+      const icsBtn = document.createElement("button");
+      icsBtn.type = "button";
+      icsBtn.className = "btn calBtn";
+      icsBtn.textContent = ".ics";
+      icsBtn.addEventListener("click", () => {
+        const ics = makeICS({
+          title,
+          isoDate,
+          timeStr: time,
+          location,
+          description,
+          durationHours: 2
+        });
+        const safeName = (group || "concert").replace(/[^\w\-]+/g, "-");
+        downloadTextFile(`${isoDate}-${safeName}.ics`, ics);
+      });
+
+      calCell.appendChild(g);
+      calCell.appendChild(icsBtn);
+
+      return tr;
+    }
+
+    // ---------- Sort + past detection ----------
+    function markPastAndSort(tbody) {
+      const today = new Date();
+      today.setHours(0,0,0,0);
+
+      const rows = Array.from(tbody.querySelectorAll("tr[data-date]"));
+
+      rows.forEach(r => {
+        const iso = r.getAttribute("data-date");
+        const d = new Date(iso + "T00:00:00");
+        if (!isNaN(d.getTime()) && d < today) r.classList.add("past");
+        else r.classList.remove("past");
+      });
+
+      // Upcoming first; past last; each sorted by date
+      rows.sort((a,b) => {
+        const da = new Date(a.getAttribute("data-date") + "T00:00:00");
+        const db = new Date(b.getAttribute("data-date") + "T00:00:00");
+
+        const aPast = da < today;
+        const bPast = db < today;
+
+        if (aPast !== bPast) return aPast ? 1 : -1;
+        return da - db;
+      });
+
+      rows.forEach(r => tbody.appendChild(r));
+    }
+
+    // Hide/show past
+    let hidePast = false;
+    const toggleBtn = document.getElementById("togglePast");
+
+    function applyHidePast() {
+      const rows = document.querySelectorAll("tr[data-date]");
+      let pastCount = 0;
+
+      rows.forEach(r => {
+        const isPast = r.classList.contains("past");
+        if (isPast) {
+          pastCount++;
+          r.style.display = hidePast ? "none" : "";
+        }
+      });
+
+      toggleBtn.textContent = (pastCount === 0)
+        ? "Hide past concerts"
+        : (hidePast ? "Show past concerts" : "Hide past concerts");
+    }
+
+    toggleBtn.addEventListener("click", () => {
+      hidePast = !hidePast;
+      applyHidePast();
+    });
+
+    document.getElementById("printPage").addEventListener("click", () => window.print());
+
+    // Download all upcoming (.ics)
+    document.getElementById("downloadAllICS").addEventListener("click", () => {
+      const tbody = document.getElementById("concertsBody");
+      const rows = Array.from(tbody.querySelectorAll("tr[data-date]"));
+
+      const today = new Date();
+      today.setHours(0,0,0,0);
+
+      let cal = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//bassoonplayer.com//Concerts//EN
+CALSCALE:GREGORIAN
+`;
+
+      rows.forEach(r => {
+        const isoDate = r.getAttribute("data-date");
+        const d = new Date(isoDate + "T00:00:00");
+        if (isNaN(d.getTime()) || d < today) return;
+
+        const tds = r.querySelectorAll("td");
+        const time = (tds[1]?.innerText || "").trim();
+        const location = (tds[2]?.innerText || "").trim();
+        const group = (tds[3]?.innerText || "").trim();
+        const comments = (tds[5]?.innerText || "").trim();
+
+        const title = group ? `${group} Concert` : "Concert";
+        const description = comments || "";
+
+        const one = makeICS({ title, isoDate, timeStr: time, location, description, durationHours: 2 });
+
+        const parts = one.split("BEGIN:VEVENT");
+        if (parts.length > 1) cal += "BEGIN:VEVENT" + parts[1].split("END:VCALENDAR")[0];
+      });
+
+      cal += "END:VCALENDAR";
+      downloadTextFile("upcoming-concerts.ics", cal);
+    });
+
+    // ---------- CORS-proof Sheet Loader (script tag) ----------
+    function gvizScriptURL() {
+      return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${SHEET_GID}&headers=1&tqx=out:json`;
+    }
+
+    function showError(msg) {
+      const tbody = document.getElementById("concertsBody");
+      tbody.innerHTML = `<tr><td colspan="7" class="statusMsg">${msg}</td></tr>`;
+    }
+
+    function renderFromGViz(resp) {
+      const tbody = document.getElementById("concertsBody");
+      tbody.innerHTML = "";
+
+      if (!resp?.table?.rows || !resp?.table?.cols) {
+        showError("No rows returned from the sheet. Make sure you have data below the header row.");
+        return;
+      }
+
+      // Column labels (if present)
+      const cols = resp.table.cols.map(c => (c.label || "").toLowerCase().trim());
+      const idx = (name) => cols.findIndex(h => h === name);
+
+      // Use labels if possible, otherwise fallback to fixed order
+      let iDate   = idx("date");      if (iDate   === -1) iDate   = 0;
+      let iTime   = idx("time");      if (iTime   === -1) iTime   = 1;
+      let iLoc    = idx("location");  if (iLoc    === -1) iLoc    = 2;
+      let iGroup  = idx("group");     if (iGroup  === -1) iGroup  = 3;
+      let iPrice  = idx("price");     if (iPrice  === -1) iPrice  = 4;
+      let iCom    = idx("comments");  if (iCom    === -1) iCom    = 5;
+
+      resp.table.rows.forEach(r => {
+        const cells = r.c || [];
+
+        const isoDate = getISODateFromCell(cells[iDate]);
+        if (!isoDate) return;
+
+        const time     = getCellText(cells[iTime]);
+        const location = getCellText(cells[iLoc]);
+        const group    = getCellText(cells[iGroup]);
+        const price    = getCellText(cells[iPrice]);
+        const comments = getCellText(cells[iCom]);
+
+        tbody.appendChild(buildRow({
+          isoDate,
+          time,
+          location,
+          group,
+          price,
+          comments
+        }));
+      });
+
+      if (!tbody.querySelector("tr[data-date]")) {
+        showError("No concerts found. Make sure there are rows under the header row.");
+        return;
+      }
+
+      markPastAndSort(tbody);
+      applyHidePast();
+
+      document.getElementById("loadedNote").textContent =
+        "Loaded from Google Sheet • " + new Date().toLocaleString();
+    }
+
+    // Google calls this function name internally
+    window.google = window.google || {};
+    window.google.visualization = window.google.visualization || {};
+    window.google.visualization.Query = window.google.visualization.Query || {};
+    window.google.visualization.Query.setResponse = function(resp) {
+      try {
+        renderFromGViz(resp);
+      } catch (e) {
+        showError("Loaded sheet data but could not render it. Check headers and date formatting.");
+      }
+    };
+
+    function loadSheetViaScript() {
+      const script = document.createElement("script");
+      script.src = gvizScriptURL();
+      script.async = true;
+      script.onerror = () => showError("Could not load the Google Sheet. Check sharing and gid.");
+      document.head.appendChild(script);
+    }
+
+    loadSheetViaScript();
+  </script>
+</body>
+</html>
