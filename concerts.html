@@ -165,11 +165,14 @@
       vertical-align:top;
     }
 
+    /* Prevent narrow wrap */
     .locationCol{ min-width: 260px; }
     .commentsCol{ min-width: 260px; }
 
+    /* Keep buttons readable */
     .calendarCol{ min-width: 200px; white-space:nowrap; }
 
+    /* Keep date/time on one line */
     .dateCol, .timeCol, .dateCell, .timeCell{ white-space:nowrap; }
 
     tbody tr:last-child td{
@@ -232,6 +235,17 @@
       text-underline-offset: 3px;
     }
     .locationCol a:hover{
+      text-decoration-thickness: 2px;
+    }
+
+    /* Comments link style */
+    .commentsCol a{
+      color: inherit;
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+    .commentsCol a:hover{
       text-decoration-thickness: 2px;
     }
 
@@ -392,17 +406,35 @@
     const SHEET_GID = 0;
     // ====================================
 
+    // Footer year + Today chip
     document.getElementById("year").textContent = new Date().getFullYear();
     const now = new Date();
     document.getElementById("todayChip").textContent =
       now.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+
+    // ---------- Safe helpers ----------
+    function escapeHTML(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function safeURL(url) {
+      const u = String(url || "").trim();
+      if (!u) return "";
+      if (!/^https?:\/\//i.test(u)) return "";
+      return u;
+    }
 
     function makeMapsLinkFromText(text) {
       if (!text) return "";
       return "https://www.google.com/maps?q=" + encodeURIComponent(text);
     }
 
-    /* NEW: Avoid duplicating venue name in calendar event location */
+    // Avoid duplicating venue name in calendar location
     function makeCalendarLocation(location, address) {
       const loc = String(location || "").trim();
       const addr = String(address || "").trim();
@@ -411,14 +443,13 @@
       const locNorm = loc.toLowerCase();
       const addrNorm = addr.toLowerCase();
 
-      // If address already includes venue name, just use address
       if (loc && addrNorm.includes(locNorm)) return addr;
-
-      // Otherwise combine
       return loc ? `${loc} — ${addr}` : addr;
     }
 
+    // ---------- Date/time parsing helpers ----------
     function parseGVizDateValueToISO(v) {
+      // v can look like: Date(2026,1,1)  where month is 0-based
       if (!v) return "";
       const m = String(v).match(/^Date\((\d{4}),(\d{1,2}),(\d{1,2})/);
       if (!m) return "";
@@ -429,6 +460,7 @@
     }
 
     function parseUSDateToISO(s) {
+      // Accept: 2/21/25, 2/21/2025, 02/21/25, etc.
       if (!s) return "";
       const m = String(s).trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);
       if (!m) return "";
@@ -436,6 +468,8 @@
       const mm = parseInt(m[1], 10);
       const dd = parseInt(m[2], 10);
       let yy = parseInt(m[3], 10);
+
+      // Interpret 2-digit year as 2000-2099
       if (m[3].length === 2) yy = 2000 + yy;
 
       const iso = `${yy}-${String(mm).padStart(2,"0")}-${String(dd).padStart(2,"0")}`;
@@ -446,6 +480,7 @@
 
     function getISODateFromCell(cell) {
       if (!cell) return "";
+
       const isoFromV = parseGVizDateValueToISO(cell.v);
       if (isoFromV) return isoFromV;
 
@@ -476,12 +511,14 @@
       return "";
     }
 
+    // ---------- Calendar helpers ----------
     function pad2(n){ return String(n).padStart(2,"0"); }
 
     function parseTimeTo24h(timeStr) {
       if (!timeStr) return null;
       const s = timeStr.trim().toUpperCase();
 
+      // 24h: 19:30
       let m = s.match(/^(\d{1,2}):(\d{2})$/);
       if (m) {
         const hh = parseInt(m[1], 10);
@@ -489,6 +526,7 @@
         if (hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59) return { hh, mm };
       }
 
+      // AM/PM: 7:30 PM or 7 PM
       m = s.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)$/);
       if (!m) return null;
 
@@ -505,7 +543,7 @@
     function fmtICSDateTimeNY(isoDate, timeStr) {
       const t = parseTimeTo24h(timeStr);
       const ymd = isoDate.replaceAll("-", "");
-      if (!t) return ymd;
+      if (!t) return ymd; // all-day fallback
       return `${ymd}T${pad2(t.hh)}${pad2(t.mm)}00`;
     }
 
@@ -594,30 +632,38 @@ END:VCALENDAR`;
       return `https://calendar.google.com/calendar/render?${params.toString()}`;
     }
 
-    function buildRow({ isoDate, time, location, group, price, comments, address }) {
+    // ---------- Row creation ----------
+    function buildRow({ isoDate, time, location, group, price, comments, address, addInfo }) {
       const tr = document.createElement("tr");
       tr.setAttribute("data-date", isoDate);
 
-      // Link click uses the Address column if present (you include venue name + street)
+      // Location link uses Address column if present (venue name + street is ideal)
       const mapsQuery = address || location || "";
       const locationHTML = location
-        ? `<a href="${makeMapsLinkFromText(mapsQuery)}" target="_blank" rel="noopener" title="${address || ""}">${location}</a>`
+        ? `<a href="${makeMapsLinkFromText(mapsQuery)}" target="_blank" rel="noopener" title="${escapeHTML(address || "")}">${escapeHTML(location)}</a>`
         : "";
 
-      // Calendar location uses Address but avoids duplicating venue name
+      // Comments link uses "Additional Info" column (hidden in sheet)
+      const infoHref = safeURL(addInfo);
+      const commentsHTML = infoHref
+        ? `<a href="${infoHref}" target="_blank" rel="noopener">${escapeHTML(comments || "More info")}</a>`
+        : `${escapeHTML(comments || "")}`;
+
+      // Calendar location includes address without duplicating venue name
       const calendarLocation = makeCalendarLocation(location, address);
       tr.setAttribute("data-cal-location", calendarLocation);
 
       tr.innerHTML = `
         <td class="dateCell">${formatPrettyDateFromISO(isoDate)}</td>
-        <td class="timeCell">${time || ""}</td>
+        <td class="timeCell">${escapeHTML(time || "")}</td>
         <td class="locationCol">${locationHTML}</td>
-        <td>${group || ""}</td>
-        <td><span class="price">${price || ""}</span></td>
-        <td class="commentsCol">${comments || ""}</td>
+        <td>${escapeHTML(group || "")}</td>
+        <td><span class="price">${escapeHTML(price || "")}</span></td>
+        <td class="commentsCol">${commentsHTML}</td>
         <td class="calCell"></td>
       `;
 
+      // Calendar buttons
       const calCell = tr.querySelector(".calCell");
 
       const title = group ? `${group} Concert` : "Concert";
@@ -660,6 +706,7 @@ END:VCALENDAR`;
       return tr;
     }
 
+    // ---------- Sort + past detection ----------
     function markPastAndSort(tbody) {
       const today = new Date();
       today.setHours(0,0,0,0);
@@ -673,6 +720,7 @@ END:VCALENDAR`;
         else r.classList.remove("past");
       });
 
+      // Upcoming first; past last; each sorted by date
       rows.sort((a,b) => {
         const da = new Date(a.getAttribute("data-date") + "T00:00:00");
         const db = new Date(b.getAttribute("data-date") + "T00:00:00");
@@ -687,6 +735,7 @@ END:VCALENDAR`;
       rows.forEach(r => tbody.appendChild(r));
     }
 
+    // Hide/show past
     let hidePast = false;
     const toggleBtn = document.getElementById("togglePast");
 
@@ -714,7 +763,7 @@ END:VCALENDAR`;
 
     document.getElementById("printPage").addEventListener("click", () => window.print());
 
-    // Download all upcoming (.ics) — uses the stored per-row calendar location
+    // Download all upcoming (.ics)
     document.getElementById("downloadAllICS").addEventListener("click", () => {
       const tbody = document.getElementById("concertsBody");
       const rows = Array.from(tbody.querySelectorAll("tr[data-date]"));
@@ -752,6 +801,7 @@ CALSCALE:GREGORIAN
       downloadTextFile("upcoming-concerts.ics", cal);
     });
 
+    // ---------- CORS-proof Sheet Loader (script tag) ----------
     function gvizScriptURL() {
       return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${SHEET_GID}&headers=1&tqx=out:json`;
     }
@@ -770,9 +820,11 @@ CALSCALE:GREGORIAN
         return;
       }
 
+      // Column labels
       const cols = resp.table.cols.map(c => (c.label || "").toLowerCase().trim());
       const idx = (name) => cols.findIndex(h => h === name);
 
+      // Main visible columns
       let iDate   = idx("date");      if (iDate   === -1) iDate   = 0;
       let iTime   = idx("time");      if (iTime   === -1) iTime   = 1;
       let iLoc    = idx("location");  if (iLoc    === -1) iLoc    = 2;
@@ -780,8 +832,9 @@ CALSCALE:GREGORIAN
       let iPrice  = idx("$$$");       if (iPrice  === -1) iPrice  = 4;
       let iCom    = idx("comments");  if (iCom    === -1) iCom    = 5;
 
-      // Optional Address column (recommended)
-      let iAddr   = idx("address");   // -1 if not found
+      // Hidden columns (optional)
+      let iAddr = idx("address");             // Address column (venue + street recommended)
+      let iInfo = idx("additional info");     // Additional Info column (URL)
 
       resp.table.rows.forEach(r => {
         const cells = r.c || [];
@@ -794,7 +847,9 @@ CALSCALE:GREGORIAN
         const group    = getCellText(cells[iGroup]);
         const price    = getCellText(cells[iPrice]);
         const comments = getCellText(cells[iCom]);
+
         const address  = (iAddr !== -1) ? getCellText(cells[iAddr]) : "";
+        const addInfo  = (iInfo !== -1) ? getCellText(cells[iInfo]) : "";
 
         tbody.appendChild(buildRow({
           isoDate,
@@ -803,7 +858,8 @@ CALSCALE:GREGORIAN
           group,
           price,
           comments,
-          address
+          address,
+          addInfo
         }));
       });
 
