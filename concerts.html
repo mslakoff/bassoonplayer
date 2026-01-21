@@ -138,7 +138,6 @@
       margin-top: 16px;
       border:1px solid var(--line);
       border-radius:14px;
-      /* Allow the table to scroll horizontally if space gets tight, rather than clipping content */
       overflow-x:auto;
       overflow-y:hidden;
       background:#fff;
@@ -166,15 +165,11 @@
       vertical-align:top;
     }
 
-    /* Prevent the Location/Comments columns from collapsing too narrow,
-       which can cause each word to wrap onto its own line. */
     .locationCol{ min-width: 260px; }
     .commentsCol{ min-width: 260px; }
 
-    /* Keep the Calendar header from getting clipped and keep buttons on one line when possible. */
     .calendarCol{ min-width: 200px; white-space:nowrap; }
 
-    /* Keep Date/Time from wrapping into multiple lines (e.g. "Sun, Feb 1, 2026"). */
     .dateCol, .timeCol, .dateCell, .timeCell{ white-space:nowrap; }
 
     tbody tr:last-child td{
@@ -229,11 +224,22 @@
       color:var(--muted);
     }
 
+    /* Location link style (keeps your clean look) */
+    .locationCol a{
+      color: inherit;
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+    .locationCol a:hover{
+      text-decoration-thickness: 2px;
+    }
+
     @media (max-width: 760px){
-  .locationCol,
-  .commentsCol{
-    min-width: 0;
-  }
+      .locationCol,
+      .commentsCol{
+        min-width: 0;
+      }
 
       .topbar{
         grid-template-columns: 1fr;
@@ -383,18 +389,36 @@
   <script>
     // ========= YOUR GOOGLE SHEET =========
     const SHEET_ID  = "1oKfS6SCUUDjMYesJ1vubIrRfb3xcpRg3Jg_tqw91TtU";
-    const SHEET_GID = 0; // if your concerts are on another tab, change this to the gid number
+    const SHEET_GID = 0;
     // ====================================
 
-    // Footer year + Today chip
     document.getElementById("year").textContent = new Date().getFullYear();
     const now = new Date();
     document.getElementById("todayChip").textContent =
       now.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 
-    // ---------- Date/time parsing helpers ----------
+    function makeMapsLinkFromText(text) {
+      if (!text) return "";
+      return "https://www.google.com/maps?q=" + encodeURIComponent(text);
+    }
+
+    /* NEW: Avoid duplicating venue name in calendar event location */
+    function makeCalendarLocation(location, address) {
+      const loc = String(location || "").trim();
+      const addr = String(address || "").trim();
+      if (!addr) return loc;
+
+      const locNorm = loc.toLowerCase();
+      const addrNorm = addr.toLowerCase();
+
+      // If address already includes venue name, just use address
+      if (loc && addrNorm.includes(locNorm)) return addr;
+
+      // Otherwise combine
+      return loc ? `${loc} — ${addr}` : addr;
+    }
+
     function parseGVizDateValueToISO(v) {
-      // v can look like: Date(2026,1,1)  where month is 0-based
       if (!v) return "";
       const m = String(v).match(/^Date\((\d{4}),(\d{1,2}),(\d{1,2})/);
       if (!m) return "";
@@ -405,7 +429,6 @@
     }
 
     function parseUSDateToISO(s) {
-      // Accept: 2/21/25, 2/21/2025, 02/21/25, etc.
       if (!s) return "";
       const m = String(s).trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/);
       if (!m) return "";
@@ -413,8 +436,6 @@
       const mm = parseInt(m[1], 10);
       const dd = parseInt(m[2], 10);
       let yy = parseInt(m[3], 10);
-
-      // Interpret 2-digit year as 2000-2099
       if (m[3].length === 2) yy = 2000 + yy;
 
       const iso = `${yy}-${String(mm).padStart(2,"0")}-${String(dd).padStart(2,"0")}`;
@@ -425,16 +446,12 @@
 
     function getISODateFromCell(cell) {
       if (!cell) return "";
-
-      // Best case: raw Date(...) exists
       const isoFromV = parseGVizDateValueToISO(cell.v);
       if (isoFromV) return isoFromV;
 
-      // Next: formatted string (like 2/21/25)
       const isoFromF = parseUSDateToISO(cell.f);
       if (isoFromF) return isoFromF;
 
-      // Last resort: try raw string in v
       const isoFromVText = parseUSDateToISO(cell.v);
       if (isoFromVText) return isoFromVText;
 
@@ -453,21 +470,18 @@
     }
 
     function getCellText(cell) {
-      // Prefer formatted value .f so time doesn't show Date(1899,...)
       if (!cell) return "";
       if (cell.f != null) return String(cell.f).trim();
       if (cell.v != null) return String(cell.v).trim();
       return "";
     }
 
-    // ---------- Calendar helpers ----------
     function pad2(n){ return String(n).padStart(2,"0"); }
 
     function parseTimeTo24h(timeStr) {
       if (!timeStr) return null;
       const s = timeStr.trim().toUpperCase();
 
-      // 24h: 19:30
       let m = s.match(/^(\d{1,2}):(\d{2})$/);
       if (m) {
         const hh = parseInt(m[1], 10);
@@ -475,7 +489,6 @@
         if (hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59) return { hh, mm };
       }
 
-      // AM/PM: 7:30 PM or 7 PM
       m = s.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)$/);
       if (!m) return null;
 
@@ -492,7 +505,7 @@
     function fmtICSDateTimeNY(isoDate, timeStr) {
       const t = parseTimeTo24h(timeStr);
       const ymd = isoDate.replaceAll("-", "");
-      if (!t) return ymd; // all-day fallback
+      if (!t) return ymd;
       return `${ymd}T${pad2(t.hh)}${pad2(t.mm)}00`;
     }
 
@@ -581,22 +594,30 @@ END:VCALENDAR`;
       return `https://calendar.google.com/calendar/render?${params.toString()}`;
     }
 
-    // ---------- Row creation ----------
-    function buildRow({ isoDate, time, location, group, price, comments }) {
+    function buildRow({ isoDate, time, location, group, price, comments, address }) {
       const tr = document.createElement("tr");
       tr.setAttribute("data-date", isoDate);
+
+      // Link click uses the Address column if present (you include venue name + street)
+      const mapsQuery = address || location || "";
+      const locationHTML = location
+        ? `<a href="${makeMapsLinkFromText(mapsQuery)}" target="_blank" rel="noopener" title="${address || ""}">${location}</a>`
+        : "";
+
+      // Calendar location uses Address but avoids duplicating venue name
+      const calendarLocation = makeCalendarLocation(location, address);
+      tr.setAttribute("data-cal-location", calendarLocation);
 
       tr.innerHTML = `
         <td class="dateCell">${formatPrettyDateFromISO(isoDate)}</td>
         <td class="timeCell">${time || ""}</td>
-        <td class="locationCol">${location || ""}</td>
+        <td class="locationCol">${locationHTML}</td>
         <td>${group || ""}</td>
         <td><span class="price">${price || ""}</span></td>
         <td class="commentsCol">${comments || ""}</td>
         <td class="calCell"></td>
       `;
 
-      // Calendar buttons
       const calCell = tr.querySelector(".calCell");
 
       const title = group ? `${group} Concert` : "Concert";
@@ -607,7 +628,7 @@ END:VCALENDAR`;
         title,
         isoDate,
         timeStr: time,
-        location,
+        location: calendarLocation,
         description,
         durationHours: 2
       });
@@ -625,7 +646,7 @@ END:VCALENDAR`;
           title,
           isoDate,
           timeStr: time,
-          location,
+          location: calendarLocation,
           description,
           durationHours: 2
         });
@@ -639,7 +660,6 @@ END:VCALENDAR`;
       return tr;
     }
 
-    // ---------- Sort + past detection ----------
     function markPastAndSort(tbody) {
       const today = new Date();
       today.setHours(0,0,0,0);
@@ -653,7 +673,6 @@ END:VCALENDAR`;
         else r.classList.remove("past");
       });
 
-      // Upcoming first; past last; each sorted by date
       rows.sort((a,b) => {
         const da = new Date(a.getAttribute("data-date") + "T00:00:00");
         const db = new Date(b.getAttribute("data-date") + "T00:00:00");
@@ -668,7 +687,6 @@ END:VCALENDAR`;
       rows.forEach(r => tbody.appendChild(r));
     }
 
-    // Hide/show past
     let hidePast = false;
     const toggleBtn = document.getElementById("togglePast");
 
@@ -696,7 +714,7 @@ END:VCALENDAR`;
 
     document.getElementById("printPage").addEventListener("click", () => window.print());
 
-    // Download all upcoming (.ics)
+    // Download all upcoming (.ics) — uses the stored per-row calendar location
     document.getElementById("downloadAllICS").addEventListener("click", () => {
       const tbody = document.getElementById("concertsBody");
       const rows = Array.from(tbody.querySelectorAll("tr[data-date]"));
@@ -717,7 +735,7 @@ CALSCALE:GREGORIAN
 
         const tds = r.querySelectorAll("td");
         const time = (tds[1]?.innerText || "").trim();
-        const location = (tds[2]?.innerText || "").trim();
+        const location = (r.getAttribute("data-cal-location") || "").trim();
         const group = (tds[3]?.innerText || "").trim();
         const comments = (tds[5]?.innerText || "").trim();
 
@@ -734,7 +752,6 @@ CALSCALE:GREGORIAN
       downloadTextFile("upcoming-concerts.ics", cal);
     });
 
-    // ---------- CORS-proof Sheet Loader (script tag) ----------
     function gvizScriptURL() {
       return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${SHEET_GID}&headers=1&tqx=out:json`;
     }
@@ -753,17 +770,18 @@ CALSCALE:GREGORIAN
         return;
       }
 
-      // Column labels (if present)
       const cols = resp.table.cols.map(c => (c.label || "").toLowerCase().trim());
       const idx = (name) => cols.findIndex(h => h === name);
 
-      // Use labels if possible, otherwise fallback to fixed order
       let iDate   = idx("date");      if (iDate   === -1) iDate   = 0;
       let iTime   = idx("time");      if (iTime   === -1) iTime   = 1;
       let iLoc    = idx("location");  if (iLoc    === -1) iLoc    = 2;
       let iGroup  = idx("group");     if (iGroup  === -1) iGroup  = 3;
-      let iPrice  = idx("price");     if (iPrice  === -1) iPrice  = 4;
+      let iPrice  = idx("$$$");       if (iPrice  === -1) iPrice  = 4;
       let iCom    = idx("comments");  if (iCom    === -1) iCom    = 5;
+
+      // Optional Address column (recommended)
+      let iAddr   = idx("address");   // -1 if not found
 
       resp.table.rows.forEach(r => {
         const cells = r.c || [];
@@ -776,6 +794,7 @@ CALSCALE:GREGORIAN
         const group    = getCellText(cells[iGroup]);
         const price    = getCellText(cells[iPrice]);
         const comments = getCellText(cells[iCom]);
+        const address  = (iAddr !== -1) ? getCellText(cells[iAddr]) : "";
 
         tbody.appendChild(buildRow({
           isoDate,
@@ -783,7 +802,8 @@ CALSCALE:GREGORIAN
           location,
           group,
           price,
-          comments
+          comments,
+          address
         }));
       });
 
